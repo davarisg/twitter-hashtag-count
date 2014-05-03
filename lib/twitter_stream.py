@@ -6,6 +6,7 @@ from tweepy import Stream
 from tweepy.streaming import StreamListener
 import json
 import logging
+import logging.handlers
 import os
 import re
 import redis
@@ -31,6 +32,8 @@ class Listener(StreamListener):
 
     # Callback function when twitter pushes a new tweet successfully
     def on_data(self, data):
+        logger = logging.getLogger('twitter_stream')
+
         # Get the Redis connection and the tweet filter
         redis = self.redis
         tweet_filter = self.tweet_filter
@@ -40,7 +43,7 @@ class Listener(StreamListener):
         try:
             decoded = json.loads(data)
         except ValueError:
-            print "Could not JSON decode Twitter response"
+            logger.warn("Could not JSON decode Twitter response")
             return False
 
         # Fetch the text content of the Tweet
@@ -48,24 +51,24 @@ class Listener(StreamListener):
         try:
             text = decoded['text']
         except KeyError:
-            print 'No key text in Twitter response'
+            logger.warn('No key text in Twitter response')
             return False
 
         # Find all the hashtags and update Redis
         hashtags = re.findall(tweet_regex, text)
         for hashtag in hashtags:
             v = redis.incr('%s:%s' % (tweet_filter, hashtag.lower()))
-            print "%s => %s" % (hashtag, v)
+            logger.debug("%s => %s" % (hashtag, v))
 
         # Increment the overall Tweet count
         self.tweet_count += 1
         if (self.tweet_count % 100 == 0):
-            print "Received %s Tweets" % self.tweet_count
+            logger.info("Received %s Tweets" % self.tweet_count)
 
         return True
 
     def on_error(self, status):
-        print status
+        logger.error("Received bad status code: %s" % status)
 
 if __name__ == '__main__':
     # Create a config and an argument parser
@@ -110,6 +113,34 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args(args_rest)
+
+    # Create a logger
+    logger = logging.getLogger('twitter_stream')
+    stderr_logger = logging.getLogger('stderr')
+
+    # Set the log level
+    logLevel = logging.DEBUG if args.debug else logging.INFO
+    logger.setLevel(logLevel)
+
+    # Create a formatter for the logger
+    formatter = logging.Formatter('%(asctime)s  %(filename)s@%(lineno)s [%(levelname)s] %(message)s')
+
+    # Create Handler for the loggers
+    if (args.verbose):
+        sh = logging.StreamHandler(sys.stdout)
+        sh.setFormatter(formatter)
+        logger.addHandler(sh)
+    else:
+        trfh = logging.handlers.TimedRotatingFileHandler(
+            filename = config.get('log', 'log_file'),
+            when = 'midnight',
+            backupCount = 5,
+            utc=True
+        )
+        trfh.setFormatter(formatter)
+        logger.addHandler(trfh)
+
+    logger.info('Twitter Stream starting up..')
 
     l = Listener(
         tweet_filter = args.filter,

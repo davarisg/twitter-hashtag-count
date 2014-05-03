@@ -10,6 +10,7 @@ import logging.handlers
 import os
 import re
 import redis
+import signal
 import sys
 
 """
@@ -70,7 +71,22 @@ class Listener(StreamListener):
     def on_error(self, status):
         logger.error("Received bad status code: %s" % status)
 
+# Global variable
+lock = None
+
+def sigint_handler(signum, frame):
+    logger = logging.getLogger('twitter_stream')
+
+    logger.info('Caught SIGINT')
+    logger.info('Releasing lock')
+    lock.release()
+
+    sys.exit()
+
 if __name__ == '__main__':
+    # Add callback function on SIGINT signal
+    signal.signal(signal.SIGINT, sigint_handler)
+
     # Create a config and an argument parser
     # All the config parameters can be also specified (and will
     # be overridden) by command line flags
@@ -139,6 +155,14 @@ if __name__ == '__main__':
         )
         trfh.setFormatter(formatter)
         logger.addHandler(trfh)
+
+    # Try to acquire the lock
+    lock = FileLock(config.get('lock', 'lock_file'))
+    if (lock.is_locked()):
+        logger.debug('Could not acquire lock')
+        sys.exit()
+    else:
+        lock.acquire()
 
     logger.info('Twitter Stream starting up..')
 

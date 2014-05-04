@@ -69,7 +69,16 @@ class Listener(StreamListener):
         return True
 
     def on_error(self, status):
+        logger = logging.getLogger('twitter_stream')
         logger.error("Received bad status code: %s" % status)
+
+    def on_limit(self, status):
+        logger = logging.getLogger('twitter_stream')
+        logger.error("Reached API request limit. Status: %s" % status)
+
+    def on_timeout(self, status):
+        logger = logging.getLogger('twitter_stream')
+        logger.error("Timeout. Status: %s" % status)
 
 # Global variable
 lock = None

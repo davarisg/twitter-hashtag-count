@@ -12,7 +12,7 @@ Packages Required:
 * python-argparse
 * python-lockfile
 * python-redis
-* python-twitter
+* python-tweepy
 * Flask
 * Flask-Cache
 
@@ -56,11 +56,11 @@ Note: You might need root provileges to start the API if you want to use port 80
 
 ## API Routes
 
-#### GET /count/${tweet_filter}
-#### GET /count/${tweet_filter}/${num_results}
+#### GET /count/${tweet\_filter}
+#### GET /count/${tweet\_filter}/${num\_results}
 Returns an array of hashes containing a hashtag count and a hashtag name for all tweets containing the word represented by the variable `tweet_filter`.
 
 `num_results` defaults to 100 elements.
 
-#### DELETE /reset/${term_filter}
+#### DELETE /reset/${term\_filter}
 Deletes all the Redis keys collected for the specific filter.

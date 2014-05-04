@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from ConfigParser import ConfigParser
 from argparse import ArgumentParser
 from flask import request, Flask
@@ -44,18 +46,18 @@ args = parser.parse_args(args_rest)
 ############### ROUTES ###############
 """
 # Get a count of hashtags from tweets that include
-# the word charity
-@app.route("/count", methods=["GET"])
-@app.route("/count/<num_results>", methods=["GET"])
+# the word represented by the variable `tweet_filter`
+@app.route("/count/<tweet_filter>", methods=["GET"])
+@app.route("/count/<tweet_filter>/<num_results>", methods=["GET"])
 @app.cache.cached(timeout=10)
-def count(num_results=100):
+def count(tweet_filter, num_results=100):
     redis = Redis(
         host = args.redis_host,
         port = int(args.redis_port),
         db = 0
     )
 
-    keys = redis.keys("%s:*" % "charity")
+    keys = redis.keys("%s:*" % tweet_filter)
     values = redis.mget(keys)
     regex = re.compile(r':(.+)$')
     response = []

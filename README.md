@@ -5,23 +5,16 @@
 This repository includes a script that connects to the Twitter Streaming API and uses a generic filter to pull tweets. The hashtags are pulled out of those tweets and a count per hashtag is recorded in a Redis database.
 
 ## Requirements
-Packages Required:
+Install `redis-server` on your machine. 
 
-* redis-server
-* python (version 2.7 and above)
-* python-argparse
-* python-lockfile
-* python-redis
-* python-tweepy
-* Flask
-* Flask-Cache
-
-## Usage
-The `twitter_stream.py` script stores the hashtags it sees in Redis. So before starting the script make sure your Redis server is running:
+Create a virtualenv and install python requirements with pip:
 
 ```sh
-$ sudo service redis-server start
+$ pip install -r requirements.txt
 ```
+
+## Usage
+The `twitter_stream.py` script stores the hashtags it sees in Redis. So before starting the script make sure your Redis server is running.
 
 ---
 
